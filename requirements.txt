@@ -1,0 +1,39 @@
+# ============================================================
+# 회의록 자동화 시스템 - 패키지 의존성
+# Python 3.11 / conda voice_ai 환경 기준
+# ============================================================
+
+# --- 음성 인식 (STT) ---
+faster-whisper==1.1.1           # Whisper large-v3-turbo 로컬 실행
+
+# --- 화자 분리 ---
+pyannote.audio==3.3.2           # 화자 diarization (HuggingFace 토큰 필요 - 최초 1회)
+pyannote.core==5.0.0
+
+# --- 오디오 처리 ---
+sounddevice==0.5.1              # 마이크 실시간 녹음
+scipy==1.15.3                   # wav 파일 저장
+pydub==0.25.1                   # mp3/m4a/mp4 → wav 변환 (ffmpeg 필요)
+numpy==2.2.4
+
+# --- Ollama 연동 ---
+requests==2.32.3                # Ollama REST API 호출
+
+# --- 설정 파일 ---
+pyyaml==6.0.2                   # config.yaml 파싱
+
+# --- 진행률 표시 ---
+tqdm==4.67.1                    # 청크 처리 진행률
+
+# ============================================================
+# 설치 명령어:
+#   conda activate voice_ai
+#   pip install -r requirements.txt
+#
+# ffmpeg 별도 설치 필요 (mp3/m4a 지원):
+#   conda install -c conda-forge ffmpeg
+#
+# pyannote 사용을 위한 HuggingFace 토큰 필요:
+#   https://huggingface.co/settings/tokens 에서 발급
+#   config.yaml의 huggingface_token에 입력
+# ============================================================

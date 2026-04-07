@@ -1,0 +1,42 @@
+# 보안 - 절대 커밋하지 말 것
+config.yaml
+*.env
+
+# 임시 녹음 파일
+temp.wav
+temp_*.wav
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+
+# conda / venv
+.venv/
+env/
+
+# 모델 캐시 (용량 큼)
+.cache/
+models/
+
+# ffmpeg 바이너리 (용량 큼)
+ffmpeg*/
+
+# 테스트 오디오 파일
+*.m4a
+*.mp3
+*.mp4
+*.wav
+
+# 이미지
+*.png
+*.jpg
+*.jpeg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode (개인 설정은 제외, 공유 설정은 포함)
+.vscode/settings.json

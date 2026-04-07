@@ -1,0 +1,30 @@
+# ============================================================
+# config.yaml 설정 예시 - 이 파일을 config.yaml로 복사 후 수정
+# cp config.yaml.example config.yaml
+# ============================================================
+
+# Obsidian vault 저장 경로 (회의록이 저장될 폴더)
+obsidian_vault_path: "C:/Users/YourName/ObsidianVault/회의록"
+
+# HuggingFace 토큰 (pyannote 화자 분리 모델용)
+# 발급: https://huggingface.co/settings/tokens
+huggingface_token: "hf_xxxxxxxxxxxxxxxxxxxx"
+
+# ============================================================
+# 화자 이름 매핑 (회의 후 원하는 이름으로 수정 가능)
+# 키: pyannote가 자동 부여하는 ID (SPEAKER_00, SPEAKER_01, ...)
+# 값: 실제 이름 (비워두면 "Speaker 1", "Speaker 2"로 표시)
+# ============================================================
+speaker_names:
+  SPEAKER_00: ""
+  SPEAKER_01: ""
+  SPEAKER_02: ""
+  SPEAKER_03: ""
+
+# ============================================================
+# Ollama 설정
+# ============================================================
+ollama:
+  host: "http://localhost:11434"
+  model: "qwen2.5:14b"
+  timeout: 300  # 초 단위 (긴 회의일수록 늘릴 것)
