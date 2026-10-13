@@ -175,6 +175,69 @@ Local Project/
 | Obsidian 연동 | vault에 바로 저장, 마크다운 호환 형식 |
 | 보안 | 회의 내용 로그 미출력, 토큰 분리 저장 |
 
+## v2 - SenseVoice + qwen3 (실험적)
+
+`meeting_transcriber_v2.py`는 기존 v1과 별개로 동작하는 실험적 버전입니다. v1(`meeting_transcriber.py`)은 수정되지 않았으며 그대로 사용 가능합니다.
+
+```
+🎤 녹음 파일 또는 마이크 실시간 녹음
+        ↓
+[ffmpeg]   wav 변환 (모노 16kHz)
+        ↓
+[pyannote.audio Pipeline]   화자 분리 (먼저 실행)
+        ↓
+[SenseVoiceSmall (funasr)]   화자 구간별 STT + 감정/이벤트 태그 추출
+        ↓
+[Ollama qwen3:14b]   회의록 정리 & 요약
+        ↓
+📄 Obsidian vault → YYYY-MM-DD_회의록.md
+```
+
+### v1과의 차이
+
+| 항목 | v1 | v2 |
+|------|----|----|
+| STT 엔진 | whisperx (large-v3-turbo) | SenseVoiceSmall (funasr) |
+| 처리 순서 | STT+화자분리 통합 후 매핑 | 화자분리 먼저 → 구간별 STT |
+| 감정/이벤트 태그 | 없음 | 웃음, 한숨 등을 스크립트 줄 끝에 표시 |
+| 요약 모델 | qwen2.5:14b | qwen3:14b |
+
+### 추가 설치
+
+```bash
+pip install funasr modelscope
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+ollama pull qwen3:14b
+```
+
+`SenseVoiceSmall`(`iic/SenseVoiceSmall`)은 HuggingFace가 아닌 **ModelScope**에서 최초 실행 시 자동 다운로드됩니다 (별도 토큰 불필요).
+
+### config.yaml에 추가 필요
+
+`config.yaml`(실제 설정 파일, git에 커밋되지 않음)에 아래 섹션을 직접 추가하세요. v1의 `ollama:` 섹션은 그대로 두고 별도로 추가합니다.
+
+```yaml
+ollama_v2:
+  host: "http://localhost:11434"
+  model: "qwen3:14b"
+  timeout: 300
+```
+
+### 실행
+
+```bash
+python meeting_transcriber_v2.py --file "회의녹음.mp3"
+python meeting_transcriber_v2.py --mic
+```
+
+### 문제 해결 (v2 전용)
+
+**`<think>` 태그가 회의록에 섞여 나옴**
+- qwen3는 기본적으로 추론 과정을 `<think>...</think>`로 감싸 출력할 수 있습니다. 코드에서 `think: false`를 요청하지만 구버전 Ollama는 이 옵션을 무시할 수 있습니다. Ollama를 최신 버전으로 업데이트하세요. (코드에도 방어적으로 `<think>` 블록을 제거하는 처리가 있습니다.)
+
+**SenseVoice 모델 다운로드 실패**
+- ModelScope 접속이 필요합니다 (최초 1회). 방화벽/프록시 환경이면 접속 가능 여부를 확인하세요.
+
 ## 문제 해결
 
 **Ollama 연결 실패**

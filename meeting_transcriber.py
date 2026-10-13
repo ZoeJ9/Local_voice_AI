@@ -1,10 +1,12 @@
 # ============================================================
 # 회의록 자동화 시스템
-# whisperx (STT + 화자분리 통합) + Ollama (qwen2.5:14b)
+# whisperx (STT + 화자분리 통합) + Ollama (qwen3:14b)
 # 완전 로컬 실행 - 인터넷 불필요 (모델 최초 다운로드 제외)
 # ============================================================
 
 import argparse
+import importlib
+import inspect
 import os
 import sys
 from datetime import datetime
@@ -13,8 +15,56 @@ from pathlib import Path
 import numpy as np
 import requests
 import sounddevice as sd
+import torch
 import yaml
 from scipy.io import wavfile
+
+# ponytail: torch>=2.6 defaults weights_only=True, but pyannote VAD/diarization
+# checkpoints pickle omegaconf/pytorch-lightning types not on the safe list.
+# These are official HuggingFace downloads (trusted source), so restore the
+# pre-2.6 behavior globally rather than allowlisting types one at a time.
+_original_torch_load = torch.load
+
+
+def _torch_load_weights_only_false(*args, **kwargs):
+    kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+
+
+torch.load = _torch_load_weights_only_false
+
+# ponytail: speechbrain 1.1.0's lazy-import guard checks
+# `filename.endswith("/inspect.py")` to detect frames from the stdlib
+# inspect module and skip triggering optional imports (k2, flair, etc).
+# On Windows the path uses backslashes, so the check always fails and
+# pytorch_lightning's is_scripting check (which calls inspect.stack())
+# ends up force-importing those optional, uninstalled modules and crashing.
+import speechbrain.utils.importutils as _sb_importutils
+
+
+def _patched_ensure_module(self, stacklevel):
+    importer_frame = None
+    try:
+        importer_frame = inspect.getframeinfo(sys._getframe(stacklevel + 1))
+    except AttributeError:
+        pass
+
+    if importer_frame is not None and os.path.basename(importer_frame.filename) == "inspect.py":
+        raise AttributeError()
+
+    if self.lazy_module is None:
+        try:
+            if self.package is None:
+                self.lazy_module = importlib.import_module(self.target)
+            else:
+                self.lazy_module = importlib.import_module(f".{self.target}", self.package)
+        except Exception as e:
+            raise ImportError(f"Lazy import of {self!r} failed") from e
+
+    return self.lazy_module
+
+
+_sb_importutils.LazyModule.ensure_module = _patched_ensure_module
 
 # ============================================================
 # 설정 파일 로드
@@ -186,7 +236,7 @@ def run_whisperx(wav_path: Path, hf_token: str) -> list:
     # 4) 화자 분리 (내부적으로 pyannote 사용, HF 토큰 필요)
     print("[화자 분리 중] whisperx diarization 실행 중...")
     from whisperx import diarize as wx_diarize
-    diarize_model = wx_diarize.DiarizationPipeline(token=hf_token, device=device)
+    diarize_model = wx_diarize.DiarizationPipeline(use_auth_token=hf_token, device=device)
     diarize_segments = diarize_model(audio)
 
     # 5) 화자 정보를 각 세그먼트에 자동 매핑
@@ -278,10 +328,10 @@ def run_ollama_summary(transcript: list, ollama_config: dict) -> dict:
     Ollama API로 회의록 요약 생성
     반환: {"summary": "...", "technical": "...", "action_items": {...}}
     """
-    print("[요약 생성 중] Ollama qwen2.5:14b 실행 중...")
+    print("[요약 생성 중] Ollama qwen3:14b 실행 중...")
 
     host = ollama_config.get("host", "http://localhost:11434")
-    model = ollama_config.get("model", "qwen2.5:14b")
+    model = ollama_config.get("model", "qwen3:14b")
     timeout = ollama_config.get("timeout", 300)
 
     # Ollama 연결 확인

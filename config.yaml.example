@@ -26,5 +26,13 @@ speaker_names:
 # ============================================================
 ollama:
   host: "http://localhost:11434"
-  model: "qwen2.5:14b"
+  model: "qwen3:14b"
   timeout: 300  # 초 단위 (긴 회의일수록 늘릴 것)
+
+# ============================================================
+# Ollama 설정 (meeting_transcriber_v2.py 전용)
+# ============================================================
+ollama_v2:
+  host: "http://localhost:11434"
+  model: "qwen3:14b"
+  timeout: 300

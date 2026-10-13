@@ -4,6 +4,7 @@
 # ============================================================
 
 # --- 음성 인식 (STT) ---
+whisperx==3.6.2                 # STT + 화자분리 통합 (faster-whisper/pyannote 버전과 호환되는 마지막 버전)
 faster-whisper==1.1.1           # Whisper large-v3-turbo 로컬 실행
 
 # --- 화자 분리 ---
@@ -14,7 +15,7 @@ pyannote.core==5.0.0
 sounddevice==0.5.1              # 마이크 실시간 녹음
 scipy==1.15.3                   # wav 파일 저장
 pydub==0.25.1                   # mp3/m4a/mp4 → wav 변환 (ffmpeg 필요)
-numpy==2.2.4
+numpy==2.0.2                    # whisperx 3.6.2가 numpy<2.1.0 요구
 
 # --- Ollama 연동 ---
 requests==2.32.3                # Ollama REST API 호출
